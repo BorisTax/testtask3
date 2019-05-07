@@ -18,9 +18,9 @@ export default class Main extends React.Component {
   onTimer(){
     if(this.state.started===false)return;
     let time=Date.now()-this.state.startTime;
-    let min=Math.round(time/60000);
+    let min=Math.trunc(time/60000);
     min=min<10?"0"+min:min;
-    let sec=Math.round(time/1000);
+    let sec=Math.trunc(time/1000)%60;
     sec=sec<10?"0"+sec:sec;
     let mill=time%1000;
     this.setState({time:`${min}:${sec}.${mill}`,timer:setTimeout(this.onTimer.bind(this),1)});
