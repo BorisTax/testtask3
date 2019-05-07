@@ -2,47 +2,90 @@ import React from 'react';
 import './style.css';
 
 export default class Main extends React.Component {
-  static letters="ABCDEFGH";
-  static numbers="12345678";
   constructor(){
     super();
-    this.state={moves:[],error:false};
+    this.reset();
   }
-  isValid(position){
-    if(position.length!=2) return false;
-    if(Main.letters.includes(position[0])&&Main.numbers.includes(position[1])) return true;
-    return false;
+  componentWillMount(){
+    this.reset();
   }
-  getMoves(position){
-    let i=Main.letters.indexOf(position[0])+1;
-    let j=position[1];
-    let res=[];
-    for(let i0=i-2;i0<=i+2;i0++)
-      for(let j0=j-2;j0<=j+2;j0++)
-        if(i0>0&&i0<9&&j0>0&&j0<9)
-          if(Math.abs((i-i0)*(j-j0))==2) res.push(Main.letters[i0-1]+j0);
-    return res;   
+  reset(){
+    let colors=[0,0,30,30,60,60,120,120,180,180,240,240,270,270,320,320];
+    colors.sort(()=>0.5-Math.random());//тасуем цвета в случайном порядке
+    let grid=colors.map(item=>{return {opened:false,selected:false,color:item}});
+    this.setState({grid,prevCellIndex:-1,selectedCellsCount:0,openedCellsCount:0,started:false});
   }
-  onClick(){
-    let position=document.querySelector('#input').value.trim();
-    let res={};
-    res.error=!this.isValid(position);//проверка на правильность ввода
-    if(!res.error) res.moves=this.getMoves(position); //рассчет возможных ходов
-    this.setState(res); 
+  start(){
+    this.reset();
+    this.setState({startTime:Date.now(),timer:setTimeout(this.onTimer.bind(this),1),started:true});
   }
-  onChange(){
-    //очищаем поле вывода результата при редактировании
-    this.setState({moves:[],error:false});
+  onTimer(){
+    if(this.state.started===false)return;
+    let time=Date.now()-this.state.startTime;
+    let min=Math.round(time/60000);
+    min=min<10?"0"+min:min;
+    let sec=Math.round(time/1000);
+    sec=sec<10?"0"+sec:sec;
+    let mill=time%1000;
+    this.setState({time:min+":"+sec+"."+mill,timer:setTimeout(this.onTimer.bind(this),1)});
   }
+  end(){
+    setTimeout(()=>alert('Вы выиграли!\nЗатраченное время: '+this.state.time),100);
+    this.setState({started:false});
+  }
+  onClick(index){
+    if(this.state.started===false) return;
+    let state=Object.assign({},this.state);
+    state.grid=Object.assign([],this.state.grid);
+    
+    if(state.grid[index].opened===true)return;
+    if(state.selectedCellsCount>1)return;
+    state.selectedCellsCount++;
+    state.grid[index].selected=!state.grid[index].selected;
+    if(state.prevCellIndex!==-1) {
+        if(index===state.prevCellIndex) {state.prevCellIndex=-1;state.selectedCellsCount=0;}else
+        if(state.grid[state.prevCellIndex].color===state.grid[index].color) {
+          state.grid[state.prevCellIndex].opened=true;
+          state.grid[index].opened=true;
+          state.prevCellIndex=-1;
+          state.openedCellsCount+=2;
+          state.selectedCellsCount=0;
+          if(state.openedCellsCount===16) setImmediate(this.end.bind(this));
+          }else{ 
+                setTimeout(()=>{
+                      state.grid[state.prevCellIndex].selected=false;
+                      state.prevCellIndex=-1;
+                      state.grid[index].selected=false;
+                      state.selectedCellsCount=0;
+                      this.setState(state);
+                      },200);
+                this.setState(state);   
+              }
+        }
+        else {
+          state.prevCellIndex=index;
+          }
+          
+    this.setState(state); 
+  }
+
   render(){
-    return <div className="main" >
-              Исходное положение:<br/>
-              <input id="input" onChange={this.onChange.bind(this)}/>
-              <br/><br/>
-              <input type="button" value="Ок" onClick={this.onClick.bind(this)} />
+    let grid=this.state.grid.map((item,index)=>{
+      let color=item.opened||item.selected?`hsl(${item.color},100%,50%)`:"white";
+      return <div className="cell" style={{backgroundColor:color}}
+          key={index}
+          onClick={this.onClick.bind(this,index)}>
+
+          </div>
+          });
+    return <div className="main">
+              <div className="grid">
+              {grid}
+              </div>
+              <input type="button" value="Старт" onClick={this.start.bind(this)}/>
               <br/>
-              <div className="result">{this.state.error===true?'Ошибка ввода':(this.state.moves.length>0?"Возможные варианты хода: \n"+this.state.moves.join(" "):"")}</div>
-      </div>
+              {this.state.time}  
+              </div>
   
   }
 }
