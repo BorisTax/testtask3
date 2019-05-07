@@ -2,7 +2,6 @@ import React from 'react';
 import './style.css';
 
 export default class Main extends React.Component {
-
   componentWillMount(){
     this.reset();
   }
@@ -10,7 +9,7 @@ export default class Main extends React.Component {
     let colors=[0,0,30,30,60,60,120,120,180,180,240,240,270,270,320,320];
     colors.sort(()=>0.5-Math.random());//тасуем цвета в случайном порядке
     let grid=colors.map(item=>{return {opened:false,selected:false,color:item}});
-    this.setState({grid,selectedCellsCount:0,openedCellsCount:0,started:false});
+    this.setState({grid,selectedCellsCount:0,openedCellsCount:0,started:false,time:"00:00.000"});
   }
   start(){
     this.reset();
@@ -75,7 +74,6 @@ export default class Main extends React.Component {
       return <div className="cell" style={{backgroundColor:color}}
           key={index}
           onClick={this.onClick.bind(this,index)}>
-
           </div>
           });
     return <div className="main">
